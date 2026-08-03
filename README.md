@@ -30,42 +30,6 @@ gated by what the input actually provides.
 
 ---
 
-## Repository layout
-
-This repo ships **code only**. The CV-tool source, model checkpoints, and the benchmark are fetched by
-`setup.sh` (see [Setup](#setup)) — they are not committed here.
-
-```
-VideoArgus/
-├── setup.sh                 # one-shot: clone tools + download checkpoints + download benchmark
-├── setup_tools.py           # clone SAM3 + UniPercept source into tool_models/
-├── download_checkpoints.py  # pre-fetch CV-tool checkpoints into tool_models/checkpoints/
-├── download_bench.py        # download VideoArgusBench from HuggingFace into ./VideoArgusBench/
-├── generate_rubrics.py      # produce rubrics with an official LLM API (OpenAI / Anthropic / Gemini)
-├── evaluate.py              # score videos with YOUR local vLLM judge; optional aggregate report
-├── videoargus/              # core package: orchestration, resolve, tools, repair, rubric induction
-├── utils/                   # prompts, media encoding, input-gated post-processing, reporting
-│
-│   # ---- created by setup.sh, git-ignored ----
-├── tool_models/
-│   ├── sam3/ UniPercept/     # cloned CV-tool source
-│   └── checkpoints/          # downloaded model weights (HF cache)
-└── VideoArgusBench/          # downloaded benchmark: inputs + one rubric per input, per task
-    └── <TASK>/
-        ├── metadata.jsonl               # HF Data Studio viewer table: {id, task, text, image, video}
-        ├── manifest.jsonl               # {id, task, text, media:[relative paths]}
-        ├── input.jsonl                  # convenience copy of the input schema
-        ├── images/<id>.jpg              # conditioning images (subject / first frame)
-        ├── videos/<id>.mp4              # conditioning source videos
-        └── rubrics/<id>.json            # one rubric per input
-```
-
-The benchmark contains **no generated videos** — you supply your own model's outputs. `rubrics/<id>.json`
-holds the shipped rubric for each input. You can regenerate rubrics with a different LLM using
-`generate_rubrics.py` and score against them with `evaluate.py --rubric-subdir`.
-
----
-
 ## Install
 
 **Conda (recommended):**
@@ -119,9 +83,6 @@ checkpoints auto-download on first use, and OCR runs on **CPU** (it is a light t
 `paddlepaddle-gpu` wheel would downgrade the CUDA libraries torch 2.8.0 pins).
 
 The judge VLM is served by you (next section) and is not fetched here.
-
-The benchmark is published as a HuggingFace dataset:
-[**zengziyun/VideoArgusBench**](https://huggingface.co/datasets/zengziyun/VideoArgusBench).
 
 ---
 
