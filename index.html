@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoArgus &middot; Sample-specific rubric evaluation for video generation</title>
+<meta name="description" content="VideoArgus scores generated videos against a rubric written for each specific prompt — weighted, checkable, hard-capped criteria, judged by your own VLM. Benchmark of 1,026 inputs across 5 conditioning settings.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#E8802B;      /* primary accent */
+    --orange-dk:#C56410;
+    --teal:#178582;        /* secondary accent */
+    --teal-dk:#0F5F5D;
+    --ink:#1C2024;
+    --ink-soft:#4A525A;
+    --line:#E7E3DC;
+    --bg:#FFFFFF;
+    --bg-soft:#FBF9F5;
+    --bg-tint:#FDF4EC;     /* faint orange wash */
+    --radius:14px;
+    --maxw:1080px;
+    --shadow:0 1px 2px rgba(28,32,36,.05), 0 8px 24px rgba(28,32,36,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal-dk);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:40;background:rgba(255,255,255,.86);
+    backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--line);
+  }
+  .nav .wrap{display:flex;align-items:center;gap:20px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.12rem;letter-spacing:-.01em}
+  .brand img.logo{width:34px;height:34px;border-radius:50%;display:block;object-fit:cover}
+  .brand b{color:var(--ink)}
+  .nav nav{margin-left:auto;display:flex;gap:22px;font-size:.92rem;font-weight:500}
+  .nav nav a{color:var(--ink-soft)}
+  .nav nav a:hover{color:var(--orange-dk);text-decoration:none}
+  .nav .ghlink{font-weight:600;color:var(--ink)}
+  @media(max-width:720px){.nav nav a:not(.ghlink){display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{padding:74px 0 40px;background:
+     radial-gradient(60% 120% at 85% -10%, var(--bg-tint) 0%, transparent 60%),
+     radial-gradient(50% 100% at 0% 0%, rgba(23,133,130,.06) 0%, transparent 55%);}
+  .hero-logo{width:104px;height:104px;border-radius:22px;display:block;margin:0 0 20px;box-shadow:var(--shadow)}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;
+     text-transform:uppercase;letter-spacing:.09em;color:var(--orange-dk);
+     background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:999px;box-shadow:var(--shadow)}
+  .kicker .pip{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+  h1{font-size:clamp(2.1rem,5vw,3.35rem);line-height:1.08;letter-spacing:-.022em;margin:.5em 0 .35em;font-weight:800}
+  h1 .hl{color:var(--orange)}
+  h1 .hl2{color:var(--teal)}
+  .authors{font-size:1.06rem;font-weight:600;color:var(--ink);margin:.2em 0 .15em;line-height:1.7}
+  .authors a{color:var(--teal-dk)}
+  .authors a:hover{color:var(--orange-dk);text-decoration:none}
+  .affil{font-size:.98rem;color:var(--ink-soft);margin:0 0 24px;font-style:italic}
+  .lede{font-size:clamp(1.05rem,2.1vw,1.28rem);color:var(--ink-soft);max-width:44em;margin:0 0 26px}
+  .btn-arxiv{background:#B31B1B;color:#fff;box-shadow:0 6px 18px rgba(179,27,27,.24)}
+  .btn-arxiv:hover{background:#8f1414}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:.98rem;
+     padding:12px 20px;border-radius:11px;border:1px solid transparent;transition:.15s;cursor:pointer}
+  .btn:hover{text-decoration:none;transform:translateY(-1px)}
+  .btn-primary{background:var(--orange);color:#fff;box-shadow:0 6px 18px rgba(232,128,43,.28)}
+  .btn-primary:hover{background:var(--orange-dk)}
+  .btn-teal{background:var(--teal);color:#fff;box-shadow:0 6px 18px rgba(23,133,130,.22)}
+  .btn-teal:hover{background:var(--teal-dk)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line);box-shadow:var(--shadow)}
+  .btn-ghost:hover{border-color:var(--orange)}
+
+  /* ---------- stat strip ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:44px 0 8px}
+  .stat{background:var(--bg-soft);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px}
+  .stat .n{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .stat .n.o{color:var(--orange)} .stat .n.t{color:var(--teal)}
+  .stat .l{font-size:.82rem;color:var(--ink-soft);margin-top:6px}
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  section.plain{border-top:none}
+  .eyebrow{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal)}
+  h2{font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.018em;margin:.35em 0 .5em;font-weight:800}
+  .sec-lede{color:var(--ink-soft);max-width:52em;margin:0 0 8px;font-size:1.03rem}
+
+  /* how-it-works steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:26px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:relative;box-shadow:var(--shadow)}
+  .step .k{font-family:"JetBrains Mono",monospace;font-size:.78rem;font-weight:600;color:#fff;
+     background:var(--teal);width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .step:nth-child(1) .k{background:var(--orange)}
+  .step:nth-child(3) .k{background:var(--orange)}
+  .step h3{margin:0 0 6px;font-size:1.02rem;font-weight:700}
+  .step p{margin:0;font-size:.9rem;color:var(--ink-soft)}
+  @media(max-width:860px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.steps{grid-template-columns:1fr}}
+
+  /* task table */
+  .tblwrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:22px}
+  table{border-collapse:collapse;width:100%;font-size:.95rem}
+  thead th{background:var(--bg-soft);text-align:left;font-weight:700;color:var(--ink);
+     padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--bg-tint)}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:.82rem;font-weight:600;color:var(--orange-dk);
+     background:var(--bg-tint);border:1px solid #F2D9C2;padding:3px 9px;border-radius:7px}
+  .viewbtn{font-size:.84rem;font-weight:600;color:var(--teal-dk);white-space:nowrap}
+  .viewbtn::after{content:" \2197"}
+
+  /* cases callout */
+  .callout{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:#fff;
+     border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:var(--radius);padding:20px 22px;margin-top:22px}
+  .callout .txt{flex:1;min-width:260px}
+  .callout .txt strong{color:var(--ink)}
+  .callout code{background:#fff;border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-size:.85em}
+
+  /* report gallery */
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+     box-shadow:var(--shadow);cursor:zoom-in;transition:.16s}
+  .card:hover{transform:translateY(-3px);border-color:var(--orange);box-shadow:0 10px 30px rgba(28,32,36,.12)}
+  .card .thumb{position:relative;aspect-ratio:3/2.35;overflow:hidden;background:var(--bg-soft);border-bottom:1px solid var(--line)}
+  .card .thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .card .meta{padding:12px 15px;display:flex;align-items:center;justify-content:space-between}
+  .card .meta b{font-size:.98rem}
+  .card .meta span{font-size:.82rem;color:var(--ink-soft)}
+  .card .badge{font-family:"JetBrains Mono",monospace;font-size:.74rem;font-weight:600;padding:2px 8px;border-radius:6px;
+     background:var(--teal);color:#fff}
+  @media(max-width:860px){.gallery{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.gallery{grid-template-columns:1fr}}
+
+  /* lightbox */
+  .lb{position:fixed;inset:0;z-index:100;background:rgba(20,22,25,.82);backdrop-filter:blur(4px);
+     display:none;align-items:flex-start;justify-content:center;padding:34px 18px;overflow:auto}
+  .lb.open{display:flex}
+  .lb .frame{background:#fff;border-radius:14px;overflow:hidden;max-width:940px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+  .lb .bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .lb .bar b{font-size:.98rem}
+  .lb .bar .x{cursor:pointer;border:none;background:var(--bg-soft);border-radius:8px;width:32px;height:32px;font-size:1.1rem;color:var(--ink-soft)}
+  .lb .bar .x:hover{background:var(--bg-tint);color:var(--orange-dk)}
+  .lb img{width:100%;display:block}
+
+  /* quote / method note */
+  .note{background:linear-gradient(180deg,var(--bg-tint),#fff);border:1px solid #F2D9C2;border-radius:var(--radius);padding:22px 24px;margin-top:22px}
+  .note p{margin:0;color:var(--ink-soft)}
+  .note .fx{color:var(--ink);font-weight:600}
+
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:34px;align-items:start}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  ul.clean{margin:14px 0 0;padding-left:0;list-style:none}
+  ul.clean li{position:relative;padding-left:26px;margin:10px 0;color:var(--ink-soft)}
+  ul.clean li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;border-radius:3px;
+     background:var(--orange);box-shadow:2px 2px 0 var(--teal)}
+  ul.clean li b{color:var(--ink)}
+
+  /* code block */
+  pre{background:#1C2024;color:#EDECE6;border-radius:12px;padding:18px 20px;overflow:auto;font-size:.86rem;line-height:1.65;margin-top:18px;box-shadow:var(--shadow)}
+  pre .c{color:#8A94A0} pre .o{color:#F2A65A} pre .t{color:#5FBFB8}
+  /* light code block — matches the white citation box */
+  pre.pre-light{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  pre.pre-light .c{color:var(--ink-soft)} pre.pre-light .o{color:var(--orange-dk)} pre.pre-light .t{color:var(--teal-dk)}
+
+  /* citation (white, matches page background) */
+  .cite-box{position:relative;margin-top:22px}
+  .cite-box pre{margin-top:0;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .copy-btn{position:absolute;top:12px;right:12px;z-index:2;font-family:"Inter",sans-serif;font-size:.82rem;font-weight:600;
+     color:var(--ink);background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:6px 13px;cursor:pointer;transition:.14s}
+  .copy-btn:hover{border-color:var(--orange);color:var(--orange-dk)}
+  .copy-btn.done{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+  footer{border-top:1px solid var(--line);padding:36px 0 56px;color:var(--ink-soft);font-size:.9rem;background:var(--bg-soft)}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  footer a{color:var(--teal-dk)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <div class="brand"><img class="logo" src="assets/VideoArgus_logo.png" alt="VideoArgus logo"><b style="color:var(--orange)">VideoArgus</b></div>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#tasks">Benchmark</a>
+      <a href="#cases">Cases</a>
+      <a href="#reports">Reports</a>
+      <a href="#cite">Cite</a>
+      <a class="ghlink" href="https://github.com/zzzmyyzeng/VideoArgus" target="_blank" rel="noopener">GitHub &#8599;</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero plain">
+  <div class="wrap">
+    <img src="assets/VideoArgus_logo.png" alt="VideoArgus logo" class="hero-logo">
+    <span class="kicker"><span class="pip"></span>Sample-specific rubric evaluation</span>
+    <h1><span class="hl">VideoArgus</span>: Agentic Rubric-Grounded Unified Evaluation for <span class="hl2">Video Generation and Editing</span></h1>
+    <p class="authors">
+      <a href="https://zzzmyyzeng.github.io/VideoArgus/" target="_blank" rel="noopener">Ziyun Zeng</a>,
+      <a href="https://zzzmyyzeng.github.io/VideoArgus/" target="_blank" rel="noopener">Zixuan Wang</a>,
+      <a href="https://zzzmyyzeng.github.io/VideoArgus/" target="_blank" rel="noopener">Yongsheng Yu</a>,
+      <a href="https://zzzmyyzeng.github.io/VideoArgus/" target="_blank" rel="noopener">Hang Hua</a>,
+      <a href="https://zzzmyyzeng.github.io/VideoArgus/" target="_blank" rel="noopener">Jiebo Luo</a>
+    </p>
+    <p class="affil">University of Rochester</p>
+    <p class="lede">VideoArgus reads each input, writes weighted, checkable, hard-capped criteria before it ever sees a video,
+      then gathers evidence with CV tools and scores each criterion with a judge VLM. One evaluator, five conditioning settings,
+      and rankings that track human judgment more closely than the benchmarks' own metrics.</p>
+    <div class="cta">
+      <a class="btn btn-arxiv" href="" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm0 5h18v2H3V9zm0 5h12v2H3v-2zm0 5h12v2H3v-2z"/></svg>
+        arXiv
+      </a>
+      <a class="btn btn-primary" href="https://github.com/zzzmyyzeng/VideoArgus" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        View on GitHub
+      </a>
+      <a class="btn btn-teal" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench" target="_blank" rel="noopener">
+        &#129303;&nbsp; VideoArgusBench on HF
+      </a>
+      <a class="btn btn-ghost" href="#reports">See example reports</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n o">1,026</div><div class="l">benchmark inputs</div></div>
+      <div class="stat"><div class="n t">5</div><div class="l">conditioning tasks</div></div>
+      <div class="stat"><div class="n o">22</div><div class="l">considered dimensions / rubric</div></div>
+      <div class="stat"><div class="n t">&#8805; official</div><div class="l">human-rank agreement, all 5 tasks</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <span class="eyebrow">How it works</span>
+    <h2>A fresh rubric per input, then evidence-grounded scoring</h2>
+    <p class="sec-lede">The pipeline factorizes into two independently swappable backbones: the LLM that writes the rubric, and the VLM that applies it. Neither is baked in.</p>
+    <div class="steps">
+      <div class="step"><div class="k">1</div><h3>Induce rubric</h3>
+        <p>A strong LLM (OpenAI / Anthropic / Gemini) reads the prompt and any conditioning image or video, then emits weighted, hard-capped criteria &mdash; before any output video exists.</p></div>
+      <div class="step"><div class="k">2</div><h3>Gather evidence</h3>
+        <p>Per criterion, an agent runs CV tools (SAM3, DINOv3, depth, OCR, flicker probes) and optional reference lookup to collect visual evidence from the generated video.</p></div>
+      <div class="step"><div class="k">3</div><h3>Score with a VLM</h3>
+        <p>Your own local vLLM judge scores each criterion 0&ndash;10 against the evidence. Any OpenAI-compatible vision model works &mdash; no hosted-API keys on the eval path.</p></div>
+      <div class="step"><div class="k">4</div><h3>Aggregate</h3>
+        <p>Importance-weighted mean with a soft hard-cap: <code>final = base&middot;(1&minus;&alpha;) + min(base,cap)&middot;&alpha;</code>. All shipped reports use <code>&alpha;=0.5</code>.</p></div>
+    </div>
+    <div class="note">
+      <p><span class="fx">Why sample-specific?</span> A single global metric rewards the same thing on every prompt.
+      A rubric written <em>for this prompt</em> can ask &ldquo;does the mortarboard follow projectile physics?&rdquo; on one input and
+      &ldquo;is the subject's identity preserved through the edit?&rdquo; on the next, and cap the score when a hard requirement fails.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TASKS / BENCHMARK -->
+<section id="tasks">
+  <div class="wrap">
+    <span class="eyebrow">Benchmark</span>
+    <h2>Five settings with 1026 inputs</h2>
+    <p class="sec-lede">Each row links straight to that task's split in the HuggingFace dataset viewer, browse the prompts, conditioning media, and shipped rubrics in your browser.</p>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Task</th><th>Conditioning</th><th>Inputs</th><th style="text-align:right">Browse cases</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag">T2V</span></td><td>text</td><td>202</td>
+            <td style="text-align:right"><a class="viewbtn" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench/viewer/T2V/test" target="_blank" rel="noopener">open in HF viewer</a></td></tr>
+          <tr><td><span class="tag">TI2V</span></td><td>text + first frame</td><td>203</td>
+            <td style="text-align:right"><a class="viewbtn" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench/viewer/TI2V/test" target="_blank" rel="noopener">open in HF viewer</a></td></tr>
+          <tr><td><span class="tag">TS2V</span></td><td>text + subject image(s)</td><td>205</td>
+            <td style="text-align:right"><a class="viewbtn" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench/viewer/TS2V/test" target="_blank" rel="noopener">open in HF viewer</a></td></tr>
+          <tr><td><span class="tag">TV2V</span></td><td>text + source video</td><td>208</td>
+            <td style="text-align:right"><a class="viewbtn" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench/viewer/TV2V/test" target="_blank" rel="noopener">open in HF viewer</a></td></tr>
+          <tr><td><span class="tag">TSV2V</span></td><td>text + subject image + source video</td><td>208</td>
+            <td style="text-align:right"><a class="viewbtn" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench/viewer/TSV2V/test" target="_blank" rel="noopener">open in HF viewer</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <div class="txt">
+        Every input (prompt + conditioning image/video + rubric file) is browsable directly in the dataset viewer,
+        or pull the whole thing with one command.
+      </div>
+      <a class="btn btn-teal" href="https://huggingface.co/datasets/zengziyun/VideoArgusBench" target="_blank" rel="noopener">Open VideoArgusBench &#8599;</a>
+    </div>
+    <div class="cite-box">
+      <button class="copy-btn" id="copyFetch" aria-label="Copy download command">Copy</button>
+      <pre class="pre-light" id="fetchText">huggingface-cli download <span class="t">zengziyun/VideoArgusBench</span> \
+    <span class="o">--repo-type</span> dataset <span class="o">--local-dir</span> VideoArgusBench</pre>
+    </div>
+  </div>
+</section>
+
+<!-- CASES: what an input looks like -->
+<section id="cases">
+  <div class="wrap">
+    <div class="grid2">
+      <div>
+        <span class="eyebrow">Anatomy of a case</span>
+        <h2>What a single benchmark input carries</h2>
+        <p class="sec-lede">A case is deliberately lightweight: a prompt, whatever conditioning the task provides,
+          and the sample-specific rubric VideoArgus induced for it. You supply your model's video; the rubric does the rest.</p>
+        <ul class="clean">
+          <li><b>Prompt</b> &mdash; the natural-language spec (e.g. <em>&ldquo;A graduate tosses their mortarboard&hellip; the cap spins, arcs, and falls back down&rdquo;</em>).</li>
+          <li><b>Conditioning media</b> &mdash; a first frame, subject image(s), and/or a source video, depending on the task.</li>
+          <li><b>Rubric</b> &mdash; 22 considered dimensions distilled into weighted, checkable criteria, each tagged <span class="tag" style="font-size:.72rem">hard/soft</span> and <span class="tag" style="font-size:.72rem">high/med/low</span>.</li>
+          <li><b>No generated video shipped</b> &mdash; you evaluate <em>your own</em> outputs against the case.</li>
+        </ul>
+      </div>
+      <div class="note" style="margin-top:34px">
+        <p><span class="fx">Example rubric criteria</span> (T2V, graduation prompt):</p>
+        <ul class="clean" style="margin-top:12px">
+          <li><b>Object presence</b> &mdash; a single human graduate is the main subject <span class="tag" style="font-size:.7rem">hard&middot;high</span></li>
+          <li><b>Action</b> &mdash; graduate tosses then catches the mortarboard <span class="tag" style="font-size:.7rem">hard&middot;high</span></li>
+          <li><b>Physical plausibility</b> &mdash; cap follows projectile physics <span class="tag" style="font-size:.7rem">soft&middot;med</span></li>
+          <li><b>Motion naturalness</b> &mdash; gown sleeves sway with the arm motion <span class="tag" style="font-size:.7rem">soft&middot;med</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="reports">
+  <div class="wrap">
+    <span class="eyebrow">Example reports</span>
+    <h2>Per-video reports, one per task</h2>
+    <p class="sec-lede">Each report shows the input, two competing generators side by side, the soft-capped final score,
+      and the per-criterion breakdown with the CV tools each criterion used. Click any card to view full size.</p>
+    <div class="gallery" id="gallery">
+      <!-- cards injected by script -->
+    </div>
+  </div>
+</section>
+
+<!-- CITATION -->
+<section id="cite">
+  <div class="wrap">
+    <span class="eyebrow">Citation</span>
+    <h2>Cite VideoArgus</h2>
+    <p class="sec-lede">The arXiv preprint is on the way &mdash; this BibTeX entry is a placeholder and will be
+      updated with the arXiv id and page numbers once it is public.</p>
+    <div class="cite-box">
+      <button class="copy-btn" id="copyCite" aria-label="Copy citation">Copy</button>
+      <pre id="citeText"><code>@misc{videoargus2026,
+  title        = {VideoArgus: Agentic Rubric-Grounded Unified Evaluation
+                  for Video Generation and Editing},
+  author       = {Zeng, Ziyun and Wang, Zixuan and Yu, Yongsheng and
+                  Hua, Hang and Luo, Jiebo},
+  year         = {2026},
+  note         = {Preprint. arXiv id to appear},
+  howpublished = {\url{https://github.com/zzzmyyzeng/VideoArgus}},
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- lightbox -->
+<div class="lb" id="lb" aria-hidden="true">
+  <div class="frame">
+    <div class="bar"><b id="lbtitle">Report</b><button class="x" id="lbclose" aria-label="Close">&times;</button></div>
+    <img id="lbimg" src="" alt="VideoArgus report">
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="brand" style="margin-bottom:6px"><img class="logo" src="assets/VideoArgus_logo.png" alt="VideoArgus logo"><b>Video<span style="color:var(--orange)">Argus</span></b></div>
+      Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing.
+    </div>
+    <div>
+      <a href="https://github.com/zzzmyyzeng/VideoArgus" target="_blank" rel="noopener">GitHub</a> &nbsp;&middot;&nbsp;
+      <a href="https://huggingface.co/datasets/zengziyun/VideoArgusBench" target="_blank" rel="noopener">VideoArgusBench</a> &nbsp;&middot;&nbsp;
+      <span>Rubrics &amp; manifests CC-BY-4.0</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- report gallery ----
+  const REPORTS = [
+    {t:"T2V",   label:"Text → Video",                 sub:"Veo 3.1 vs. CogVideoX-1.5B"},
+    {t:"TI2V",  label:"Text + first frame",                sub:"first-frame conditioned"},
+    {t:"TS2V",  label:"Text + subject image",              sub:"subject-conditioned"},
+    {t:"TV2V",  label:"Text + source video",               sub:"video-to-video"},
+    {t:"TSV2V", label:"Text + subject + video (edit)",     sub:"subject-preserving edit"},
+  ];
+  const g = document.getElementById('gallery');
+  REPORTS.forEach(r=>{
+    const src = `assets/reports/report_${r.t}.png`;
+    const el = document.createElement('div');
+    el.className='card';
+    el.innerHTML = `
+      <div class="thumb"><img loading="lazy" src="${src}" alt="VideoArgus ${r.t} report"></div>
+      <div class="meta"><b>${r.label}</b><span class="badge">${r.t}</span></div>`;
+    el.addEventListener('click',()=>openLB(src, `${r.label} · ${r.t}`));
+    g.appendChild(el);
+  });
+
+  // ---- lightbox ----
+  const lb=document.getElementById('lb'), lbimg=document.getElementById('lbimg'), lbtitle=document.getElementById('lbtitle');
+  function openLB(src,title){lbimg.src=src;lbtitle.textContent=title;lb.classList.add('open');lb.setAttribute('aria-hidden','false');}
+  function closeLB(){lb.classList.remove('open');lb.setAttribute('aria-hidden','true');lbimg.src='';}
+  document.getElementById('lbclose').addEventListener('click',closeLB);
+  lb.addEventListener('click',e=>{if(e.target===lb)closeLB();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLB();});
+
+  // ---- copy buttons (citation + fetch command) ----
+  function wireCopy(btnId,srcId){
+    const btn=document.getElementById(btnId);
+    if(!btn) return;
+    btn.addEventListener('click',async()=>{
+      const txt=document.getElementById(srcId).innerText;
+      try{ await navigator.clipboard.writeText(txt); }
+      catch(_){ const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove(); }
+      btn.textContent='Copied ✓';btn.classList.add('done');
+      setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done');},1600);
+    });
+  }
+  wireCopy('copyCite','citeText');
+  wireCopy('copyFetch','fetchText');
+</script>
+</body>
+</html>
