@@ -1,0 +1,59 @@
+# VideoArgus — pip dependencies (pip fallback; see environment.yml for the conda route).
+#
+# Install torch FIRST, matching your CUDA. The CV tools (SAM3 / UniPercept / DINOv3 / Depth-Anything)
+# are validated on torch 2.8.0 — pin it explicitly rather than letting pip pull the newest build
+# (2.10+ often outpaces driver/tool support). torch 2.8.0 ships on the cu126 / cu128 wheel indexes
+# (NOT cu124, which stops at 2.6.0); its CUDA 12.6 runtime works on 12.x drivers. E.g.:
+#
+#   pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu126
+#
+# (swap cu126 -> cu128 for newer drivers), then: pip install -r requirements.txt
+#
+# The vendored CV-tool source is fetched by setup_tools.py: SAM3 is editable-installed (`pip install
+# -e tool_models/sam3`) so `import sam3` resolves; UniPercept is added to sys.path at runtime. Neither
+# is on PyPI, so neither is listed below.
+
+# --- rubric-generation providers (official SDKs; standard env creds) ---
+openai>=1.40
+anthropic>=0.40
+google-genai>=1.0
+
+# --- core / models ---
+# Upper-bounded below 5: UniPercept's vendored InternVLChatModel targets the 4.x modeling API;
+# transformers 5.x's tie_weights() expects an `all_tied_weights_keys` attribute the old model class
+# never sets (AttributeError at load). 4.56/4.57 have DINOv3 + Depth-Anything and load all CV tools.
+transformers>=4.56,<5
+huggingface-hub>=0.34
+accelerate>=1.0
+timm>=1.0
+einops>=0.8
+sentencepiece>=0.2
+safetensors
+peft>=0.17          # UniPercept's InternVLChatModel imports peft at load time
+# SAM3's model_builder imports pkg_resources, which setuptools >=81 no longer ships — pin below 81.
+setuptools<81
+
+# --- CV tools (DINOv3 / Depth-Anything / SAM3 / UniPercept / OCR / flicker) ---
+paddleocr>=3.0
+# PaddleOCR needs a paddlepaddle *backend engine* (the paddleocr wheel does not pull one in). OCR runs
+# on CPU (it is a light tool, and the paddlepaddle-gpu wheel would downgrade torch 2.8.0's CUDA libs),
+# so the CPU build is what we install.
+paddlepaddle>=3.0
+iopath>=0.1.10
+ftfy
+regex
+scipy
+shapely
+pycocotools
+
+# --- media I/O ---
+decord>=0.6
+opencv-python-headless>=4.10
+Pillow>=10
+imageio-ffmpeg>=0.5
+numpy>=1.24,<2
+
+# --- misc ---
+python-dotenv>=1.0
+requests
+tqdm

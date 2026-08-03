@@ -1,0 +1,68 @@
+# VideoArgus — conda environment (primary install route).
+#
+#   conda env create -f environment.yml
+#   conda activate videoargus
+#
+# torch is pinned to 2.8.0 (torchvision 0.23.0): the version the CV tools (SAM3 / UniPercept /
+# DINOv3 / Depth-Anything / PaddleOCR) are validated against — UniPercept upstream pins exactly this,
+# and it has broad CUDA-driver coverage. Newer torch (2.10+) often outpaces driver/tool support, so
+# we hold at 2.8. torch 2.8.0 pairs with CUDA 12.6 (pip: use the cu126/cu128 wheel index, NOT cu124);
+# its 12.6 runtime works on 12.x drivers.
+# On a CPU-only box, drop pytorch-cuda and install the CPU builds (the CV tools need a GPU to run;
+# rubric generation and the local-vLLM judge client do not).
+#
+# The vendored CV-tool source is fetched by setup_tools.py after the env is created: SAM3 is
+# editable-installed (`pip install -e tool_models/sam3`) so `import sam3` resolves; UniPercept is added
+# to sys.path at runtime by videoargus/paths.py. Neither is on PyPI, so neither is listed here.
+name: videoargus
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip>=24
+  # --- pytorch (GPU) — pinned to the tool-validated version (see note above) ---
+  - pytorch=2.8.0
+  - torchvision=0.23.0
+  - pytorch-cuda=12.6
+  - pip:
+      # rubric-generation providers (official SDKs; standard env creds)
+      - openai>=1.40
+      - anthropic>=0.40
+      - google-genai>=1.0
+      # core / models
+      # <5: UniPercept's vendored InternVLChatModel targets the 4.x modeling API; transformers 5.x's
+      # tie_weights() expects an `all_tied_weights_keys` attr the old class never sets. 4.56/4.57 have
+      # DINOv3 + Depth-Anything and load all CV tools.
+      - transformers>=4.56,<5
+      - huggingface-hub>=0.34
+      - accelerate>=1.0
+      - timm>=1.0
+      - einops>=0.8
+      - sentencepiece>=0.2
+      - safetensors
+      - peft>=0.17            # UniPercept's InternVLChatModel imports peft at load time
+      # SAM3's model_builder imports pkg_resources, which setuptools >=81 no longer ships.
+      - setuptools<81
+      # CV tools
+      - paddleocr>=3.0
+      # PaddleOCR needs a paddlepaddle backend engine (not pulled in by the paddleocr wheel). OCR runs
+      # on CPU (light tool, and the paddlepaddle-gpu wheel would downgrade torch 2.8.0's CUDA libs).
+      - paddlepaddle>=3.0
+      - iopath>=0.1.10
+      - ftfy
+      - regex
+      - scipy
+      - shapely
+      - pycocotools
+      # media I/O
+      - decord>=0.6
+      - opencv-python-headless>=4.10
+      - Pillow>=10
+      - imageio-ffmpeg>=0.5
+      - "numpy>=1.24,<2"
+      # misc
+      - python-dotenv>=1.0
+      - requests
+      - tqdm
