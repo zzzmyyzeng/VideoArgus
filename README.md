@@ -12,7 +12,7 @@ importance-weighted mean with a soft hard-cap.
 
 Two axes are deliberately decoupled:
 
-* **Rubric generator** — rubrics can be produced by any strong LLM (OpenAI, Anthropic, or Gemini).
+* **Rubric generator** — rubrics can be produced by any strong LLM (GPT, Claude, or Gemini).
 * **Scorer VLM** — scoring runs against *your own* local vLLM server (any OpenAI-compatible model).
 
 The benchmark spans five conditioning settings:
