@@ -7,7 +7,7 @@
 VideoArgus scores a generated video against a rubric written *for that specific prompt* — not a fixed
 global metric. For each input it generates a set of weighted, checkable criteria (with importance and
 hard-cap semantics), then for each criterion an agent gathers evidence (CV tools + optional web image
-lookup) and a judge VLM scores it 0–10. Per-criterion scores aggregate to a per-video final via an
+search) and a judge VLM scores it 0–10. Per-criterion scores aggregate to a per-video final via an
 importance-weighted mean with a soft hard-cap.
 
 Two axes are deliberately decoupled:
@@ -55,7 +55,7 @@ published on PyPI.
 
 **Credentials:** copy `.env.example` to `.env` and fill in only what you use. `generate_rubrics.py`
 reads the standard `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`; the download scripts read
-`HF_TOKEN`; the optional named-IP reference lookup reads `SERPER_API_KEY`. The evaluation path uses
+`HF_TOKEN`; the optional named-IP reference search reads `SERPER_API_KEY`. The evaluation path uses
 **no** hosted-API credentials.
 
 ---
