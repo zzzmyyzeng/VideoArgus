@@ -121,6 +121,31 @@
   .viewbtn{font-size:.84rem;font-weight:600;color:var(--teal-dk);white-space:nowrap}
   .viewbtn::after{content:" \2197"}
 
+  /* leaderboard */
+  .lb-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .lb-tab{font-family:"Inter",sans-serif;font-weight:600;font-size:.92rem;cursor:pointer;
+     padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+     transition:.15s;line-height:1}
+  .lb-tab:hover{border-color:var(--orange);color:var(--orange-dk)}
+  .lb-tab.active{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px rgba(232,128,43,.26)}
+  .lb-zone{margin-top:20px}
+  .lb-zonehead{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+  .lb-zonehead .zt{font-weight:700;font-size:1.02rem;color:var(--ink)}
+  .lb-zonehead .zs{font-size:.85rem;color:var(--ink-soft)}
+  .lb-zonehead .zbadge{font-family:"JetBrains Mono",monospace;font-size:.72rem;font-weight:600;
+     padding:2px 9px;border-radius:7px;text-transform:uppercase;letter-spacing:.04em}
+  .zbadge.api{color:var(--teal-dk);background:rgba(23,133,130,.10);border:1px solid rgba(23,133,130,.28)}
+  .zbadge.oss{color:var(--orange-dk);background:var(--bg-tint);border:1px solid #F2D9C2}
+  table.lbt td.rank{width:34px;color:var(--ink-soft);font-variant-numeric:tabular-nums;font-weight:600}
+  table.lbt td.model{font-weight:600;color:var(--ink)}
+  table.lbt td.pnum{color:var(--ink-soft);font-family:"JetBrains Mono",monospace;font-size:.86rem;white-space:nowrap}
+  table.lbt td.score{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  table.lbt td.score .best{color:var(--orange-dk);font-weight:800}
+  table.lbt td.score .second{text-decoration:underline;text-underline-offset:3px}
+  table.lbt thead th.score{text-align:right}
+  .lb-note{margin-top:14px;font-size:.85rem;color:var(--ink-soft)}
+  .lb-note b{color:var(--orange-dk)}
+
   /* cases callout */
   .callout{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:#fff;
      border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:var(--radius);padding:20px 22px;margin-top:22px}
@@ -195,6 +220,7 @@
     <nav>
       <a href="#how">How it works</a>
       <a href="#tasks">Benchmark</a>
+      <a href="#leaderboard">Leaderboard</a>
       <a href="#cases">Cases</a>
       <a href="#reports">Reports</a>
       <a href="#cite">Cite</a>
@@ -307,6 +333,23 @@
   </div>
 </section>
 
+<!-- LEADERBOARD -->
+<section id="leaderboard">
+  <div class="wrap">
+    <span class="eyebrow">Leaderboard</span>
+    <h2>VideoArgus Leaderboards</h2>
+    <p class="sec-lede">Each task ranks the evaluated generators by their VideoArgus score. Pick a task to see its board.
+      Within each task, closed <b>API models</b> are listed above <b>open-source models</b>. Best per task is
+      <span style="color:var(--orange-dk);font-weight:800">bold</span>, second is <span style="text-decoration:underline;text-underline-offset:3px">underlined</span>;
+      <span class="mono">#P</span> is parameter size.</p>
+
+    <div class="lb-tabs" id="lbTabs" role="tablist"></div>
+    <div id="lbBody"></div>
+
+    <p class="lb-note">Ranks are computed across <b>all models in the task</b> (API and open-source together); the API / open-source split is presentational.</p>
+  </div>
+</section>
+
 <!-- CASES: what an input looks like -->
 <section id="cases">
   <div class="wrap">
@@ -354,18 +397,14 @@
   <div class="wrap">
     <span class="eyebrow">Citation</span>
     <h2>Cite VideoArgus</h2>
-    <p class="sec-lede">The arXiv preprint is on the way &mdash; this BibTeX entry is a placeholder and will be
-      updated with the arXiv id and page numbers once it is public.</p>
+    <p class="sec-lede">If you find VideoArgus useful, please cite our paper.</p>
     <div class="cite-box">
       <button class="copy-btn" id="copyCite" aria-label="Copy citation">Copy</button>
-      <pre id="citeText"><code>@misc{videoargus2026,
-  title        = {VideoArgus: Agentic Rubric-Grounded Unified Evaluation
-                  for Video Generation and Editing},
-  author       = {Zeng, Ziyun and Wang, Zixuan and Yu, Yongsheng and
-                  Hua, Hang and Luo, Jiebo},
-  year         = {2026},
-  note         = {Preprint. arXiv id to appear},
-  howpublished = {\url{https://github.com/zzzmyyzeng/VideoArgus}},
+      <pre id="citeText"><code>@article{zeng2026videoargus,
+  title={VideoArgus: Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing},
+  author={Zeng, Ziyun and Wang, Zixuan and Yu, Yongsheng and Hua, Hang and Luo, Jiebo},
+  journal={arXiv preprint arXiv:2608.05485},
+  year={2026}
 }</code></pre>
     </div>
   </div>
@@ -436,6 +475,128 @@
   }
   wireCopy('copyCite','citeText');
   wireCopy('copyFetch','fetchText');
+
+  // ---- leaderboard ----
+  // Data transcribed from the VideoArgus leaderboard table. p:"--" == closed API model; any param
+  // string == open-source. Best/second are computed per task across ALL models (API + OSS together).
+  const LB = {
+    T2V: [
+      {m:"Seedance 2.0", p:"--", s:9.34},
+      {m:"Veo 3.1", p:"--", s:8.66},
+      {m:"Kling v3 Omni", p:"--", s:8.61},
+      {m:"HunyuanVideo-1.5", p:"8.3B", s:8.54},
+      {m:"Wan2.2-T2V", p:"14B", s:8.41},
+      {m:"OmniWeaving", p:"8.3B", s:8.40},
+      {m:"LongCat-Video", p:"13.6B", s:8.11},
+      {m:"Step-Video", p:"29B", s:7.77},
+      {m:"SANA-Video", p:"2B", s:7.54},
+      {m:"CogVideoX1.5", p:"5B", s:7.52},
+      {m:"CogVideoX", p:"5B", s:7.39},
+    ],
+    TI2V: [
+      {m:"Seedance 2.0", p:"--", s:8.97},
+      {m:"Kling v3 Omni", p:"--", s:8.41},
+      {m:"Veo 3.1", p:"--", s:8.36},
+      {m:"HunyuanVideo-1.5", p:"8.3B", s:8.11},
+      {m:"OmniWeaving", p:"8.3B", s:7.99},
+      {m:"Wan2.2-TI2V", p:"5B", s:7.82},
+      {m:"CogVideoX", p:"5B", s:7.29},
+      {m:"CogVideoX1.5", p:"5B", s:7.16},
+      {m:"Step-Video", p:"29B", s:7.11},
+      {m:"LTX-Video", p:"2B", s:6.25},
+      {m:"SANA-Video", p:"2B", s:5.89},
+    ],
+    TS2V: [
+      {m:"Seedance 2.0", p:"--", s:9.16},
+      {m:"Kling v3 Omni", p:"--", s:8.22},
+      {m:"OmniWeaving", p:"8.3B", s:7.28},
+      {m:"SkyReels-V3-R2V", p:"14B", s:7.25},
+      {m:"Veo 3.1", p:"--", s:6.97},
+      {m:"Phantom", p:"14B", s:6.89},
+      {m:"VACE", p:"14B", s:6.82},
+      {m:"HunyuanCustom", p:"13B", s:6.75},
+      {m:"Wan2.2-TI2V", p:"5B", s:5.67},
+      {m:"UniVideo", p:"13B", s:4.13},
+      {m:"LTX-Video", p:"2B", s:3.89},
+    ],
+    TV2V: [
+      {m:"Seedance 2.0", p:"--", s:7.54},
+      {m:"Kling v3 Omni", p:"--", s:6.79},
+      {m:"Kiwi-Edit", p:"5B", s:6.18},
+      {m:"Aurora", p:"5B", s:6.02},
+      {m:"OmniWeaving", p:"8.3B", s:5.87},
+      {m:"ReCo", p:"1.3B", s:5.77},
+      {m:"VideoCoF", p:"14B", s:5.53},
+      {m:"LucyEdit", p:"5B", s:4.99},
+      {m:"VACE-Fun", p:"14B", s:4.92},
+      {m:"LTX-Video", p:"2B", s:3.48},
+      {m:"UniVideo", p:"13B", s:3.36},
+    ],
+    TSV2V: [
+      {m:"Seedance 2.0", p:"--", s:8.10},
+      {m:"Kling v3 Omni", p:"--", s:7.16},
+      {m:"Aurora", p:"5B", s:5.03},
+      {m:"OmniWeaving", p:"8.3B", s:4.97},
+      {m:"Kiwi-Edit", p:"5B", s:4.51},
+      {m:"VACE-Fun", p:"14B", s:4.20},
+      {m:"UniVideo", p:"13B", s:3.20},
+      {m:"VACE", p:"1.3B", s:2.81},
+      {m:"AnyV2V", p:"1.4B", s:2.66},
+      {m:"VACE", p:"14B", s:2.62},
+      {m:"LTX-Video", p:"2B", s:2.45},
+    ],
+  };
+  const LB_TASKS = [
+    {t:"T2V",   label:"T2V"},
+    {t:"TI2V",  label:"TI2V"},
+    {t:"TS2V",  label:"TS2V"},
+    {t:"TV2V",  label:"TV2V"},
+    {t:"TSV2V", label:"TSV2V"},
+  ];
+  const lbTabs = document.getElementById('lbTabs');
+  const lbBody = document.getElementById('lbBody');
+
+  function scoreClass(v, best, second){
+    if(v===best) return 'best';
+    if(v===second) return 'second';
+    return '';
+  }
+  function zoneTable(rows, best, second){
+    if(!rows.length) return '<p class="lb-note" style="margin-top:2px">None in this task.</p>';
+    const body = rows.map((r,i)=>{
+      const cls = scoreClass(r.s, best, second);
+      const sc = cls ? `<span class="${cls}">${r.s.toFixed(2)}</span>` : r.s.toFixed(2);
+      return `<tr><td class="rank">${i+1}</td><td class="model">${r.m}</td>`+
+             `<td class="pnum">${r.p==='--'?'&mdash;':r.p}</td><td class="score">${sc}</td></tr>`;
+    }).join('');
+    return `<div class="tblwrap"><table class="lbt"><thead><tr>`+
+           `<th style="width:34px">#</th><th>Model</th><th>#P</th><th class="score">Score</th>`+
+           `</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  function renderLB(task){
+    const rows = LB[task].slice().sort((a,b)=>b.s-a.s);
+    const scores = rows.map(r=>r.s).sort((a,b)=>b-a);
+    const best = scores[0];
+    const second = scores.find(v=>v<best);   // highest score strictly below best
+    const api = rows.filter(r=>r.p==='--');
+    const oss = rows.filter(r=>r.p!=='--');
+    lbBody.innerHTML =
+      `<div class="lb-zone"><div class="lb-zonehead"><span class="zbadge api">API</span>`+
+      `<span class="zt">Closed / API models</span></div>`+
+      `${zoneTable(api, best, second)}</div>`+
+      `<div class="lb-zone"><div class="lb-zonehead"><span class="zbadge oss">Open&#8209;source</span>`+
+      `<span class="zt">Open-source models</span></div>`+
+      `${zoneTable(oss, best, second)}</div>`;
+    [...lbTabs.children].forEach(b=>b.classList.toggle('active', b.dataset.task===task));
+  }
+  LB_TASKS.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='lb-tab'+(i===0?' active':'');
+    b.dataset.task=t.t; b.textContent=t.label; b.setAttribute('role','tab');
+    b.addEventListener('click',()=>renderLB(t.t));
+    lbTabs.appendChild(b);
+  });
+  renderLB('T2V');
 </script>
 </body>
 </html>
