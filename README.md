@@ -1,6 +1,4 @@
-# VideoArgus
-
-**Sample-specific rubric evaluation for text/image/subject/video-conditioned video generation.**
+# VideoArgus: Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing
 
 🌐 **[Project page](https://zzzmyyzeng.github.io/VideoArgus/)** &nbsp;·&nbsp; 💻 **[GitHub](https://github.com/zzzmyyzeng/VideoArgus)** &nbsp;·&nbsp; 🤗 **[VideoArgusBench (HuggingFace)](https://huggingface.co/datasets/zengziyun/VideoArgusBench)**
 
@@ -163,4 +161,19 @@ instead of using the copy in this repo:
 
 ```bash
 huggingface-cli download zengziyun/VideoArgusBench --repo-type dataset --local-dir VideoArgusBench
+```
+
+---
+
+## Citation
+
+If you find VideoArgus useful, please cite our paper:
+
+```bibtex
+@article{zeng2026videoargus,
+  title={VideoArgus: Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing},
+  author={Zeng, Ziyun and Wang, Zixuan and Yu, Yongsheng and Hua, Hang and Luo, Jiebo},
+  journal={arXiv preprint arXiv:2608.05485},
+  year={2026}
+}
 ```
