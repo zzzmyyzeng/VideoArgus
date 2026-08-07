@@ -1,6 +1,6 @@
 # VideoArgus: Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing
 
-🌐 **[Project page](https://zzzmyyzeng.github.io/VideoArgus/)** &nbsp;·&nbsp; 💻 **[GitHub](https://github.com/zzzmyyzeng/VideoArgus)** &nbsp;·&nbsp; 🤗 **[VideoArgusBench (HuggingFace)](https://huggingface.co/datasets/zengziyun/VideoArgusBench)**
+📄 **[arXiv](https://arxiv.org/pdf/2608.05485)** &nbsp;·&nbsp; 🌐 **[Project page](https://zzzmyyzeng.github.io/VideoArgus/)** &nbsp;·&nbsp; 💻 **[GitHub](https://github.com/zzzmyyzeng/VideoArgus)** &nbsp;·&nbsp; 🤗 **[VideoArgusBench (HuggingFace)](https://huggingface.co/datasets/zengziyun/VideoArgusBench)**
 
 VideoArgus scores a generated video against a rubric written *for that specific prompt* — not a fixed
 global metric. For each input it generates a set of weighted, checkable criteria (with importance and
